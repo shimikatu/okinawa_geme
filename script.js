@@ -14,13 +14,31 @@ const player = {
     dx: 0, // 移動量
     // シーサーの描画（簡易的な形状）
     draw: function() {
-        ctx.fillStyle = '#d35400'; // 赤茶色
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = '#f1c40f'; // 黄色
-        ctx.fillRect(this.x + 10, this.y + 10, 10, 10); // 左目
-        ctx.fillRect(this.x + 30, this.y + 10, 10, 10); // 右目
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(this.x + 10, this.y + 35, 30, 5); // 口
+        const red = '#e74c3c';
+        const blue = '#3498db';
+        const skin = '#f1c40f'; // 肌色
+        const brown = '#d35400';
+
+        // 帽子
+        ctx.fillStyle = red;
+        ctx.fillRect(this.x + 10, this.y, 30, 10);
+        ctx.fillRect(this.x + 5, this.y + 10, 40, 5);
+
+        // 顔
+        ctx.fillStyle = skin;
+        ctx.fillRect(this.x + 10, this.y + 15, 30, 15);
+
+        // 服（オーバーオール）
+        ctx.fillStyle = blue;
+        ctx.fillRect(this.x, this.y + 30, 50, 15);
+        ctx.fillStyle = red; // シャツ
+        ctx.fillRect(this.x, this.y + 30, 10, 10);
+        ctx.fillRect(this.x + 40, this.y + 30, 10, 10);
+
+        // 靴
+        ctx.fillStyle = brown;
+        ctx.fillRect(this.x, this.y + 45, 15, 5);
+        ctx.fillRect(this.x + 35, this.y + 45, 15, 5);
     }
 };
 
@@ -31,8 +49,8 @@ const bullets = [];
 const enemies = [];
 const enemyRowCount = 5;
 const enemyColumnCount = 10;
-const enemyWidth = 50;
-const enemyHeight = 20;
+const enemyWidth = 40;
+const enemyHeight = 40;
 const enemyPadding = 10;
 const enemyOffsetTop = 30;
 const enemyOffsetLeft = 30;
@@ -40,6 +58,25 @@ const enemyOffsetLeft = 30;
 const enemyBullets = [];
 const enemyShootInterval = 1000; // 1秒ごとに敵が弾を撃つチャンス
 let lastEnemyShot = 0;
+
+// UFO
+const ufo = {
+    x: 0,
+    y: 10,
+    originalY: 10,
+    angle: 0,
+    width: 40,
+    height: 20,
+    speed: 3,
+    active: false,
+    draw: function() {
+        ctx.fillStyle = '#f39c12'; // オレンジ色
+        ctx.fillRect(this.x + 10, this.y, 20, 5);
+        ctx.fillRect(this.x, this.y + 5, 40, 10);
+        ctx.fillStyle = '#f1c40f'; // 黄色
+        ctx.fillRect(this.x + 5, this.y + 8, 30, 4);
+    }
+};
 
 let gameOver = false;
 let animationId;
@@ -57,15 +94,34 @@ function createEnemies() {
                 width: enemyWidth,
                 height: enemyHeight,
                 draw: function() {
-                    ctx.fillStyle = '#27ae60'; // 緑色
+                    const brickColor = '#f39c12'; // オレンジ
+                    const borderColor = '#d35400'; // 暗いオレンジ
+                    const questionColor = '#ffffff'; // 白
+                    const rivetColor = '#000000'; // 黒
+
+                    // 本体
+                    ctx.fillStyle = brickColor;
                     ctx.fillRect(this.x, this.y, this.width, this.height);
-                    // ゴーヤーのぶつぶつを表現
-                    ctx.fillStyle = '#2ecc71';
-                    ctx.fillRect(this.x + 5, this.y + 5, 5, 5);
-                    ctx.fillRect(this.x + 15, this.y + 10, 5, 5);
-                    ctx.fillRect(this.x + 25, this.y + 5, 5, 5);
-                    ctx.fillRect(this.x + 35, this.y + 10, 5, 5);
-                    ctx.fillRect(this.x + 45, this.y + 5, 5, 5);
+
+                    // 枠線
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+                    // クエスチョンマーク (テキスト)
+                    ctx.fillStyle = questionColor;
+                    ctx.font = `bold ${this.height * 0.7}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('?', this.x + this.width / 2, this.y + this.height / 2 + 2); // 少し下に調整
+
+                    // 四隅の鋲
+                    const rivetSize = 3;
+                    ctx.fillStyle = rivetColor;
+                    ctx.fillRect(this.x + 2, this.y + 2, rivetSize, rivetSize); // 左上
+                    ctx.fillRect(this.x + this.width - rivetSize - 2, this.y + 2, rivetSize, rivetSize); // 右上
+                    ctx.fillRect(this.x + 2, this.y + this.height - rivetSize - 2, rivetSize, rivetSize); // 左下
+                    ctx.fillRect(this.x + this.width - rivetSize - 2, this.y + this.height - rivetSize - 2, rivetSize, rivetSize); // 右下
                 }
             });
         }
@@ -89,7 +145,39 @@ function drawEnemies() {
     });
 }
 
+function drawUfo() {
+    if (ufo.active) {
+        ufo.draw();
+    }
+}
+
 // --- 更新関連 --- //
+function launchUfo() {
+    if (!ufo.active) {
+        ufo.active = true;
+        // ランダムに左右どちらから出現させるか決める
+        if (Math.random() < 0.5) {
+            ufo.x = -ufo.width;
+            ufo.speed = Math.abs(ufo.speed);
+        } else {
+            ufo.x = canvas.width;
+            ufo.speed = -Math.abs(ufo.speed);
+        }
+    }
+}
+
+function moveUfo() {
+    if (ufo.active) {
+        ufo.x += ufo.speed;
+        ufo.angle += 0.05; // 揺れの速さ
+        ufo.y = ufo.originalY + Math.sin(ufo.angle) * 10; // 揺れの幅
+
+        // 画面外に出たら非表示
+        if (ufo.x > canvas.width || ufo.x + ufo.width < 0) {
+            ufo.active = false;
+        }
+    }
+}
 function movePlayer() {
     player.x += player.dx;
 
@@ -193,6 +281,22 @@ function detectCollision() {
         });
     });
 
+    // プレイヤーの弾とUFOの当たり判定
+    bullets.forEach((bullet, bulletIndex) => {
+        if (
+            ufo.active &&
+            bullet.x < ufo.x + ufo.width &&
+            bullet.x + bullet.width > ufo.x &&
+            bullet.y < ufo.y + ufo.height &&
+            bullet.y + bullet.height > ufo.y
+        ) {
+            ufo.active = false;
+            bullets.splice(bulletIndex, 1);
+            score += 100; // 高得点
+            scoreEl.innerText = score;
+        }
+    });
+
     // 敵の弾とプレイヤーの当たり判定
     enemyBullets.forEach((bullet, bulletIndex) => {
         if (
@@ -243,6 +347,9 @@ function update(currentTime) {
 
     drawEnemies();
     moveEnemies();
+
+    drawUfo();
+    moveUfo();
 
     drawPlayerBullets();
     movePlayerBullets();
@@ -296,3 +403,5 @@ function shoot() {
 
 document.addEventListener('keydown', keyDown);
 document.addEventListener('keyup', keyUp);
+
+setInterval(launchUfo, 7000); // 7秒ごとにUFOを出現させる
