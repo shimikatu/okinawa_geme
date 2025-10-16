@@ -1,0 +1,33 @@
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #2c3e50; /* 深い海の青 */
+    color: white;
+}
+
+h1 {
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px #000000;
+}
+
+canvas {
+    background-color: #87ceeb; /* 沖縄の空のスカイブルー */
+    border: 3px solid #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.score-container, .controls {
+    margin: 10px 0;
+    font-size: 1.2em;
+}
+
+#score {
+    font-weight: bold;
+    color: #f1c40f;
+}
