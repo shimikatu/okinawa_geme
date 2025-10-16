@@ -44,6 +44,9 @@ let lastEnemyShot = 0;
 let gameOver = false;
 let animationId;
 
+let enemyDx = 2;
+let enemyDy = 20;
+
 // 敵の作成
 function createEnemies() {
     for (let c = 0; c < enemyColumnCount; c++) {
@@ -150,7 +153,7 @@ function enemyShoot(currentTime) {
 }
 
 function moveEnemies() {
-    wallHit = false;
+    let wallHit = false;
     enemies.forEach(enemy => {
         enemy.x += enemyDx;
         if (enemy.x + enemy.width > canvas.width || enemy.x < 0) {
@@ -183,7 +186,6 @@ function detectCollision() {
                 // 当たったら弾と敵を消す
                 setTimeout(() => { // ちらつき防止
                     enemies.splice(enemyIndex, 1);
-                    bullets.splice(bulletIndex, 1);
                     score += 10;
                     scoreEl.innerText = score;
                 }, 0);
@@ -253,7 +255,7 @@ function update(currentTime) {
     checkWin();
 }
 
-update(0);
+update();
 
 // --- キーボード操作 --- //
 function keyDown(e) {
